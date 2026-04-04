@@ -1,5 +1,5 @@
-import React from 'react';
-import { Package, Layers, Briefcase, Eye, TrendingUp, Users } from 'lucide-react';
+import React, { useState } from 'react';
+import { Package, Layers, Briefcase, Eye, TrendingUp, Users, MessageSquare, CheckCircle, Clock, ChevronRight, X } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 const visitData = [
@@ -21,7 +21,22 @@ const salesData = [
   { name: 'Sun', sales: 3490 },
 ];
 
+const inquiryRecords = [
+  { id: 1, name: 'John Doe', email: 'john@example.com', product: 'Self Adhesive Vinyl (车贴)', date: '2026-04-04 10:30', isRead: false, message: 'I am interested in bulk ordering. Could you provide a quotation for 100 rolls?' },
+  { id: 2, name: 'Alice Smith', email: 'alice@company.com', product: 'PVC Flex Banner (灯箱布)', date: '2026-04-03 15:45', isRead: false, message: 'Could you provide the technical specs for the 440g banner?' },
+  { id: 3, name: 'Bob Johnson', email: 'bob@agency.net', product: 'Standard Roll Up (易拉宝)', date: '2026-04-02 09:15', isRead: true, message: 'What is the lead time for 500 units shipped to Singapore?' },
+  { id: 4, name: 'Emma Wong', email: 'emma@wong-designs.com', product: 'PVC Foam Board (PVC发泡板)', date: '2026-04-01 14:20', isRead: true, message: 'Do you ship to Southeast Asia? Looking for 5mm thickness.' },
+  { id: 5, name: 'Michael Brown', email: 'michael@printshop.com', product: 'LED Power Supply (LED电源)', date: '2026-03-30 11:10', isRead: true, message: 'Looking for a quote on 50 units of the 200W outdoor power supply.' },
+];
+
 export default function Dashboard() {
+  const [inquiryTab, setInquiryTab] = useState<'unread' | 'read'>('unread');
+  const [selectedInquiry, setSelectedInquiry] = useState<typeof inquiryRecords[0] | null>(null);
+  
+  const filteredInquiries = inquiryRecords.filter(record => 
+    inquiryTab === 'unread' ? !record.isRead : record.isRead
+  );
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div>
@@ -81,6 +96,126 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* 咨询记录模块 */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 flex items-center">
+              <MessageSquare className="w-5 h-5 mr-2 text-blue-600" />
+              最新咨询记录 (Inquiries)
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">查看和管理来自独立站客户的询盘信息。</p>
+          </div>
+          <div className="flex bg-gray-100 p-1 rounded-lg">
+            <button 
+              onClick={() => setInquiryTab('unread')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center ${inquiryTab === 'unread' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Clock className="w-4 h-4 mr-1.5" />
+              未读 ({inquiryRecords.filter(r => !r.isRead).length})
+            </button>
+            <button 
+              onClick={() => setInquiryTab('read')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center ${inquiryTab === 'read' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <CheckCircle className="w-4 h-4 mr-1.5" />
+              已读 ({inquiryRecords.filter(r => r.isRead).length})
+            </button>
+          </div>
+        </div>
+        
+        <div className="divide-y divide-gray-100">
+          {filteredInquiries.length > 0 ? (
+            filteredInquiries.map(inquiry => (
+              <div key={inquiry.id} className="p-6 hover:bg-gray-50/50 transition-colors group flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-1">
+                    <h3 className="text-sm font-bold text-gray-900">{inquiry.name}</h3>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{inquiry.email}</span>
+                    {!inquiry.isRead && <span className="w-2 h-2 rounded-full bg-red-500" title="未读"></span>}
+                  </div>
+                  <p className="text-sm text-gray-600 line-clamp-1 mb-2">{inquiry.message}</p>
+                  <div className="flex items-center text-xs text-gray-500 gap-4">
+                    <span className="flex items-center text-blue-600 bg-blue-50 px-2 py-0.5 rounded"><Package className="w-3.5 h-3.5 mr-1" /> 意向产品: {inquiry.product}</span>
+                    <span className="flex items-center"><Clock className="w-3.5 h-3.5 mr-1" /> {inquiry.date}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end">
+                  <button 
+                    onClick={() => setSelectedInquiry(inquiry)}
+                    className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+                  >
+                    查看详情 <ChevronRight className="w-4 h-4 ml-1" />
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-8 text-center text-gray-500 text-sm">
+              暂无{inquiryTab === 'unread' ? '未读' : '已读'}咨询记录
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 咨询详情弹窗 */}
+      {selectedInquiry && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900">咨询详情</h3>
+              <button 
+                onClick={() => setSelectedInquiry(null)}
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">客户姓名</p>
+                  <p className="text-base font-semibold text-gray-900">{selectedInquiry.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">联系邮箱</p>
+                  <p className="text-base font-semibold text-gray-900">{selectedInquiry.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">意向产品</p>
+                  <p className="text-base font-semibold text-blue-600">{selectedInquiry.product}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">咨询时间</p>
+                  <p className="text-base font-semibold text-gray-900">{selectedInquiry.date}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-2">留言内容</p>
+                <div className="bg-gray-50 p-4 rounded-xl text-gray-700 text-sm leading-relaxed border border-gray-100">
+                  {selectedInquiry.message}
+                </div>
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
+              <button 
+                onClick={() => setSelectedInquiry(null)}
+                className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                关闭
+              </button>
+              <a 
+                href={`mailto:${selectedInquiry.email}`}
+                className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm flex items-center"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                回复邮件
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

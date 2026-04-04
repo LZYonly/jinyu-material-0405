@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, ArrowLeft, Sparkles, Save, CheckCircle2 } from 'lucide-react';
+import { Plus, Edit, Trash2, ArrowLeft, Sparkles, Save, CheckCircle2, Eye, X } from 'lucide-react';
 
 const faqs = [
   { id: 1, question: 'What is the minimum order quantity?', status: '已发布' },
@@ -8,16 +8,19 @@ const faqs = [
 ];
 
 export default function FAQ() {
-  const [view, setView] = useState<'list' | 'edit'>('list');
+  const [view, setView] = useState<'list' | 'edit' | 'details'>('list');
   const [activeLang, setActiveLang] = useState('en');
   const [showAIToast, setShowAIToast] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<typeof faqs[0] | null>(null);
+  const [selectedItem, setSelectedItem] = useState<typeof faqs[0] | null>(null);
 
   const handleAIGenerate = () => {
     setShowAIToast(true);
     setTimeout(() => setShowAIToast(false), 4000);
   };
 
-  if (view === 'edit') {
+  if (view === 'edit' || view === 'details') {
+    const isReadOnly = view === 'details';
     return (
       <div className="space-y-6 animate-in fade-in duration-500 relative">
         {showAIToast && (
@@ -33,14 +36,16 @@ export default function FAQ() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">编辑 FAQ</h1>
-              <p className="text-sm text-gray-500 mt-1">配置常见问题多语言详情内容。</p>
+              <h1 className="text-2xl font-bold text-gray-900">{isReadOnly ? 'FAQ 详情' : '编辑 FAQ'}</h1>
+              <p className="text-sm text-gray-500 mt-1">{isReadOnly ? '查看常见问题内容及多语言SEO配置。' : '配置常见问题多语言详情内容。'}</p>
             </div>
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
-            <Save className="w-4 h-4 mr-2" />
-            保存 FAQ
-          </button>
+          {!isReadOnly && (
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
+              <Save className="w-4 h-4 mr-2" />
+              保存 FAQ
+            </button>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -62,10 +67,12 @@ export default function FAQ() {
               ))}
             </div>
             <div className="p-3 sm:p-0">
-              <button onClick={handleAIGenerate} className="flex items-center text-sm font-medium text-purple-700 hover:text-purple-800 bg-purple-100 hover:bg-purple-200 px-4 py-2 rounded-lg transition-colors w-full sm:w-auto justify-center">
-                <Sparkles className="w-4 h-4 mr-1.5" />
-                AI一键生成中/越/菲草稿
-              </button>
+              {!isReadOnly && (
+                <button onClick={handleAIGenerate} className="flex items-center text-sm font-medium text-purple-700 hover:text-purple-800 bg-purple-100 hover:bg-purple-200 px-4 py-2 rounded-lg transition-colors w-full sm:w-auto justify-center">
+                  <Sparkles className="w-4 h-4 mr-1.5" />
+                  AI一键生成中/越/菲草稿
+                </button>
+              )}
             </div>
           </div>
           
@@ -81,25 +88,25 @@ export default function FAQ() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">SEO标题 (SEO Title) <span className="text-red-500">*</span></label>
-                <input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" placeholder="用于搜索引擎优化的标题..." />
+                <input type="text" disabled={isReadOnly} className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} placeholder="用于搜索引擎优化的标题..." defaultValue={selectedItem?.question || ''} />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">H1大标题 / 问题 (H1 Question) <span className="text-red-500">*</span></label>
-                <input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" placeholder="常见问题主标题..." />
+                <input type="text" disabled={isReadOnly} className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} placeholder="常见问题主标题..." defaultValue={selectedItem?.question || ''} />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">独立网址别名 (Slug) <span className="text-red-500">*</span></label>
-                <input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" placeholder="例如: minimum-order-quantity" />
+                <input type="text" disabled={isReadOnly} className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} placeholder="例如: minimum-order-quantity" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">独立图片Alt文案 (Image Alt) <span className="text-red-500">*</span></label>
-                <input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" placeholder="描述图片的替代文本..." />
+                <input type="text" disabled={isReadOnly} className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} placeholder="描述图片的替代文本..." />
               </div>
             </div>
             
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-1.5">正文详情 / 答案 (Answer Content) <span className="text-red-500">*</span></label>
-              <div className="border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-500 transition-all">
+              <div className={`border border-gray-200 rounded-lg overflow-hidden transition-all ${isReadOnly ? 'opacity-70' : 'focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-500'}`}>
                 <div className="bg-gray-50 border-b border-gray-200 px-3 py-2 flex space-x-2">
                   <div className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer transition-colors"></div>
                   <div className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer transition-colors"></div>
@@ -107,7 +114,7 @@ export default function FAQ() {
                   <div className="w-px h-6 bg-gray-300 mx-1"></div>
                   <div className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer transition-colors"></div>
                 </div>
-                <textarea rows={10} className="w-full bg-white px-4 py-3 text-sm outline-none resize-y" placeholder="在此输入独立的答案详情内容（支持富文本）..."></textarea>
+                <textarea disabled={isReadOnly} rows={10} className={`w-full bg-white px-4 py-3 text-sm outline-none resize-y ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : ''}`} placeholder="在此输入独立的答案详情内容（支持富文本）..."></textarea>
               </div>
             </div>
           </div>
@@ -123,7 +130,7 @@ export default function FAQ() {
           <h1 className="text-2xl font-bold text-gray-900">FAQ 管理</h1>
           <p className="text-sm text-gray-500 mt-1">管理网站的常见问题与解答。</p>
         </div>
-        <button onClick={() => setView('edit')} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
+        <button onClick={() => { setSelectedItem(null); setView('edit'); }} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
           <Plus className="w-4 h-4 mr-2" />
           添加 FAQ
         </button>
@@ -135,7 +142,7 @@ export default function FAQ() {
             <tr className="bg-gray-50/50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
               <th className="px-6 py-4 font-semibold">常见问题 (EN)</th>
               <th className="px-6 py-4 font-semibold">状态</th>
-              <th className="px-6 py-4 font-semibold text-right">操作</th>
+              <th className="px-6 py-4 font-semibold">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -153,12 +160,15 @@ export default function FAQ() {
                     {faq.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => setView('edit')} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="编辑">
+                <td className="px-6 py-4">
+                  <div className="flex items-center space-x-2">
+                    <button onClick={() => { setSelectedItem(faq); setView('details'); }} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="查看详情">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => { setSelectedItem(faq); setView('edit'); }} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="编辑">
                       <Edit className="w-4 h-4" />
                     </button>
-                    <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="删除">
+                    <button onClick={() => setDeleteModal(faq)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="删除">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -168,6 +178,33 @@ export default function FAQ() {
           </tbody>
         </table>
       </div>
+
+
+
+      {/* Delete Modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">确认删除 FAQ？</h3>
+              <p className="text-sm text-gray-500">
+                您确定要删除问题 <span className="font-semibold text-gray-900">"{deleteModal.question}"</span> 吗？此操作无法撤销。
+              </p>
+            </div>
+            <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-center gap-3">
+              <button onClick={() => setDeleteModal(null)} className="flex-1 px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors">
+                取消
+              </button>
+              <button onClick={() => setDeleteModal(null)} className="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm">
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

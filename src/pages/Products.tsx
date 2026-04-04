@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Search, Filter, ArrowLeft, Sparkles, Save, CheckCircle2, List, Eye, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Filter, ArrowLeft, Sparkles, Save, CheckCircle2, List, Eye, Upload, X } from 'lucide-react';
 
 const productsList = [
   { id: 1, name: 'Self Adhesive Vinyl (车贴)', category: 'Advertising Media', status: '上架', image: 'https://picsum.photos/seed/vinyl/100/100' },
@@ -24,6 +24,8 @@ export default function Products() {
   const [view, setView] = useState<'list' | 'edit' | 'details'>('list');
   const [activeLang, setActiveLang] = useState('en');
   const [showAIToast, setShowAIToast] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<typeof productsList[0] | null>(null);
+  const [selectedItem, setSelectedItem] = useState<typeof productsList[0] | null>(null);
   
   // Specs are now managed per language
   const [specsByLang, setSpecsByLang] = useState<Record<string, {id: number, name: string, value: string}[]>>({
@@ -56,7 +58,8 @@ export default function Products() {
     setSpecsByLang(newSpecs);
   };
 
-  if (view === 'edit') {
+  if (view === 'edit' || view === 'details') {
+    const isReadOnly = view === 'details';
     return (
       <div className="space-y-6 animate-in fade-in duration-500 relative">
         {showAIToast && (
@@ -72,14 +75,16 @@ export default function Products() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">编辑产品</h1>
-              <p className="text-sm text-gray-500 mt-1">配置产品基本信息及多语言规格参数。</p>
+              <h1 className="text-2xl font-bold text-gray-900">{isReadOnly ? '产品详情' : '编辑产品'}</h1>
+              <p className="text-sm text-gray-500 mt-1">{isReadOnly ? '查看产品基本信息及多语言规格参数。' : '配置产品基本信息及多语言规格参数。'}</p>
             </div>
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
-            <Save className="w-4 h-4 mr-2" />
-            保存产品
-          </button>
+          {!isReadOnly && (
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
+              <Save className="w-4 h-4 mr-2" />
+              保存产品
+            </button>
+          )}
         </div>
 
         {/* Basic Info Module */}
@@ -93,15 +98,16 @@ export default function Products() {
               <label className="block text-sm font-semibold text-gray-900 mb-2">产品名称 (Product Name) <span className="text-red-500">*</span></label>
               <input 
                 type="text" 
-                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" 
+                disabled={isReadOnly}
+                className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`}
                 placeholder="请输入产品名称..." 
-                defaultValue="Self Adhesive Vinyl (车贴)" 
+                defaultValue={selectedItem?.name || "Self Adhesive Vinyl (车贴)"} 
               />
-              <p className="text-xs text-gray-500 mt-2">此名称主要用于后台管理识别。</p>
+              {!isReadOnly && <p className="text-xs text-gray-500 mt-2">此名称主要用于后台管理识别。</p>}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">产品主图 (Product Image) <span className="text-red-500">*</span></label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-blue-500 transition-colors cursor-pointer bg-gray-50 hover:bg-blue-50/50 group">
+              <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl transition-colors bg-gray-50 group ${isReadOnly ? 'opacity-70 cursor-not-allowed' : 'hover:border-blue-500 cursor-pointer hover:bg-blue-50/50'}`}>
                 <div className="space-y-2 text-center">
                   <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-gray-200 group-hover:border-blue-200 group-hover:bg-blue-50 transition-colors">
                     <Upload className="h-6 w-6 text-gray-400 group-hover:text-blue-600 transition-colors" />
@@ -139,21 +145,24 @@ export default function Products() {
               ))}
             </div>
             <div className="p-3 sm:p-0">
-              <button onClick={handleAIGenerate} className="flex items-center text-sm font-medium text-purple-700 hover:text-purple-800 bg-purple-100 hover:bg-purple-200 px-4 py-2 rounded-lg transition-colors w-full sm:w-auto justify-center">
-                <Sparkles className="w-4 h-4 mr-1.5" />
-                AI一键生成中/越/菲草稿
-              </button>
+              {!isReadOnly && (
+                <button onClick={handleAIGenerate} className="flex items-center text-sm font-medium text-purple-700 hover:text-purple-800 bg-purple-100 hover:bg-purple-200 px-4 py-2 rounded-lg transition-colors w-full sm:w-auto justify-center">
+                  <Sparkles className="w-4 h-4 mr-1.5" />
+                  AI一键生成中/越/菲草稿
+                </button>
+              )}
             </div>
           </div>
           
           <div className="p-6 space-y-6">
             <div className="bg-blue-50 border border-blue-100 text-blue-800 text-sm px-4 py-3 rounded-lg flex items-start">
               <div className="font-medium">
-                当前正在编辑 <span className="font-bold uppercase bg-blue-200 px-1.5 py-0.5 rounded text-blue-900 mx-1">{activeLang}</span> 语言版本的产品规格参数。
+                当前正在编辑 <span className="font-bold uppercase bg-blue-200 px-1.5 py-0.5 rounded text-blue-900 mx-1">{activeLang}</span> 语言版本的产品规格参数和应用场景。
               </div>
             </div>
             
             <div className="space-y-4">
+              <h3 className="text-md font-bold text-gray-900">规格参数 (Specifications)</h3>
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-gray-50 border-b border-gray-200 text-gray-700">
@@ -169,42 +178,96 @@ export default function Products() {
                         <td className="px-0 py-0 border-r border-gray-200">
                           <input 
                             type="text" 
+                            disabled={isReadOnly}
                             value={spec.name}
                             onChange={(e) => handleSpecChange(index, 'name', e.target.value)}
-                            className="w-full bg-transparent px-4 py-3 outline-none focus:bg-blue-50/50 transition-colors" 
+                            className={`w-full bg-transparent px-4 py-3 outline-none transition-colors ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-blue-50/50'}`} 
                             placeholder="例如: Release paper"
                           />
                         </td>
                         <td className="px-0 py-0 border-r border-gray-200">
                           <input 
                             type="text" 
+                            disabled={isReadOnly}
                             value={spec.value}
                             onChange={(e) => handleSpecChange(index, 'value', e.target.value)}
-                            className="w-full bg-transparent px-4 py-3 outline-none focus:bg-blue-50/50 transition-colors" 
+                            className={`w-full bg-transparent px-4 py-3 outline-none transition-colors ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-blue-50/50'}`} 
                             placeholder="例如: 120/140g±5g"
                           />
                         </td>
                         <td className="px-4 py-2 text-center">
-                          <button 
-                            onClick={() => removeSpec(index)}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                            title="删除此行"
-                          >
-                            <Trash2 className="w-4 h-4 mx-auto" />
-                          </button>
+                          {!isReadOnly && (
+                            <button 
+                              onClick={() => removeSpec(index)}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                              title="删除此行"
+                            >
+                              <Trash2 className="w-4 h-4 mx-auto" />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <button 
-                onClick={addSpec}
-                className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors border border-dashed border-blue-300 w-full justify-center"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                添加规格参数行
-              </button>
+              {!isReadOnly && (
+                <button 
+                  onClick={addSpec}
+                  className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors border border-dashed border-blue-300 w-full justify-center"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  添加规格参数行
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-4 pt-6 border-t border-gray-100">
+              <h3 className="text-md font-bold text-gray-900">应用场景 (Application Scenarios)</h3>
+              <p className="text-sm text-gray-500">详细描述产品在不同场景下的应用，包含针对越南、菲律宾等热带气候的特性说明及SEO长尾词。</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">户外广告 (Outdoor Advertising)</label>
+                  <textarea 
+                    rows={4}
+                    disabled={isReadOnly}
+                    className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none transition-all resize-none ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`}
+                    defaultValue={activeLang === 'en' ? "Ideal for large-scale outdoor billboards in Manila and Ho Chi Minh City. Engineered for tropical climates, offering excellent UV resistance against high temperatures and sun exposure. Ensures 3-5 years of outdoor durability, waterproof and moisture-proof during the rainy season. Perfect for advertising engineers and foreign trade OEM seeking reliable outdoor advertising materials." : ""}
+                    placeholder="描述户外广告应用场景..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">门店招牌 (Store Signage)</label>
+                  <textarea 
+                    rows={4}
+                    disabled={isReadOnly}
+                    className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none transition-all resize-none ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`}
+                    defaultValue={activeLang === 'en' ? "Suitable for local store front inkjet printing and indoor lightboxes in shopping malls. Provides vibrant color reproduction and long-lasting performance. Includes frosted glass decals for store windows, offering privacy and branding. A top choice for retail material wholesalers in Vietnam and the Philippines." : ""}
+                    placeholder="描述门店招牌应用场景..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">交通安防 (Traffic Safety)</label>
+                  <textarea 
+                    rows={4}
+                    disabled={isReadOnly}
+                    className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none transition-all resize-none ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`}
+                    defaultValue={activeLang === 'en' ? "High-visibility materials for road reflective signs in Vietnam and the Philippines. Essential for construction site safety warnings and traffic management. Weather-resistant and highly reflective, meeting local safety standards for advertising engineering projects." : ""}
+                    placeholder="描述交通安防应用场景..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">车身商业广告 (Vehicle Advertising)</label>
+                  <textarea 
+                    rows={4}
+                    disabled={isReadOnly}
+                    className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none transition-all resize-none ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`}
+                    defaultValue={activeLang === 'en' ? "Premium vehicle wraps for local buses and delivery trucks. Features excellent conformability for curved surfaces and strong adhesion. Withstands tropical heat and heavy rain, maintaining brand image on the move. Ideal for commercial fleet branding and foreign trade OEM." : ""}
+                    placeholder="描述车身商业广告应用场景..."
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -219,7 +282,7 @@ export default function Products() {
           <h1 className="text-2xl font-bold text-gray-900">产品管理</h1>
           <p className="text-sm text-gray-500 mt-1">管理网站展示的所有产品信息及规格参数。</p>
         </div>
-        <button onClick={() => setView('edit')} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
+        <button onClick={() => { setSelectedItem(null); setView('edit'); }} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
           <Plus className="w-4 h-4 mr-2" />
           发布新产品
         </button>
@@ -252,7 +315,7 @@ export default function Products() {
                 <th className="px-6 py-4 font-semibold">产品信息</th>
                 <th className="px-6 py-4 font-semibold">所属分类</th>
                 <th className="px-6 py-4 font-semibold">状态</th>
-                <th className="px-6 py-4 font-semibold text-right">操作</th>
+                <th className="px-6 py-4 font-semibold">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -278,15 +341,15 @@ export default function Products() {
                       {product.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="查看详情">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center space-x-2">
+                      <button onClick={() => { setSelectedItem(product); setView('details'); }} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="查看详情">
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button onClick={() => setView('edit')} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="编辑">
+                      <button onClick={() => { setSelectedItem(product); setView('edit'); }} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="编辑">
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="删除">
+                      <button onClick={() => setDeleteModal(product)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="删除">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -297,6 +360,33 @@ export default function Products() {
           </table>
         </div>
       </div>
+
+
+
+      {/* Delete Modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">确认删除产品？</h3>
+              <p className="text-sm text-gray-500">
+                您确定要删除产品 <span className="font-semibold text-gray-900">"{deleteModal.name}"</span> 吗？此操作无法撤销。
+              </p>
+            </div>
+            <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-center gap-3">
+              <button onClick={() => setDeleteModal(null)} className="flex-1 px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors">
+                取消
+              </button>
+              <button onClick={() => setDeleteModal(null)} className="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm">
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
