@@ -1,5 +1,5 @@
-import React from 'react';
-import { Save, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Save, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const configItems = [
   { 
@@ -13,14 +13,31 @@ const configItems = [
 ];
 
 export default function GlobalLangConfig() {
+  const [toastMsg, setToastMsg] = useState('');
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 3000);
+  };
+
+  const handleSave = () => {
+    showToast('全局配置保存成功');
+  };
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 relative">
+      {toastMsg && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center z-50 animate-in slide-in-from-top-4">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 mr-2" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">全局多语言配置</h1>
           <p className="text-sm text-gray-500 mt-1">手动配置全站固定文字，禁止前端自动翻译覆盖，确保多语言精准度。</p>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
+        <button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
           <Save className="w-4 h-4 mr-2" />
           保存全局配置
         </button>

@@ -11,18 +11,141 @@ export default function FAQ() {
   const [view, setView] = useState<'list' | 'edit' | 'details'>('list');
   const [activeLang, setActiveLang] = useState('en');
   const [showAIToast, setShowAIToast] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
   const [deleteModal, setDeleteModal] = useState<typeof faqs[0] | null>(null);
   const [selectedItem, setSelectedItem] = useState<typeof faqs[0] | null>(null);
 
+  const [faqDataByLang, setFaqDataByLang] = useState<Record<string, { seoTitle: string, question: string, slug: string, alt: string, answer: string }>>({
+    en: { seoTitle: '', question: '', slug: '', alt: '', answer: '' },
+    zh: { seoTitle: '', question: '', slug: '', alt: '', answer: '' },
+    vi: { seoTitle: '', question: '', slug: '', alt: '', answer: '' },
+    ph: { seoTitle: '', question: '', slug: '', alt: '', answer: '' },
+  });
+
+  React.useEffect(() => {
+    if (selectedItem) {
+      setFaqDataByLang(prev => ({
+        ...prev,
+        en: { 
+          seoTitle: selectedItem.question, 
+          question: selectedItem.question, 
+          slug: selectedItem.question.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''), 
+          alt: selectedItem.question, 
+          answer: 'We typically require a minimum order quantity of 100 rolls for standard materials.' 
+        }
+      }));
+    } else {
+      setFaqDataByLang({
+        en: { seoTitle: '', question: '', slug: '', alt: '', answer: '' },
+        zh: { seoTitle: '', question: '', slug: '', alt: '', answer: '' },
+        vi: { seoTitle: '', question: '', slug: '', alt: '', answer: '' },
+        ph: { seoTitle: '', question: '', slug: '', alt: '', answer: '' },
+      });
+    }
+  }, [selectedItem]);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 3000);
+  };
+
   const handleAIGenerate = () => {
     setShowAIToast(true);
+    
+    const currentQuestion = faqDataByLang['en']?.question || 'What is the minimum order quantity?';
+    const generatedData = { ...faqDataByLang };
+    
+    if (currentQuestion.includes('minimum order')) {
+      generatedData['zh'] = { 
+        seoTitle: '最小起订量是多少？ | 常见问题',
+        question: '最小起订量是多少？', 
+        slug: 'minimum-order-quantity',
+        alt: '最小起订量说明',
+        answer: '对于标准材料，我们通常要求最小起订量为100卷。对于定制订单，起订量可能会有所不同，请联系我们的销售团队获取详细信息。' 
+      };
+      generatedData['vi'] = { 
+        seoTitle: 'Số lượng đặt hàng tối thiểu là bao nhiêu? | Câu hỏi thường gặp',
+        question: 'Số lượng đặt hàng tối thiểu là bao nhiêu?', 
+        slug: 'so-luong-dat-hang-toi-thieu',
+        alt: 'Giải thích số lượng đặt hàng tối thiểu',
+        answer: 'Chúng tôi thường yêu cầu số lượng đặt hàng tối thiểu là 100 cuộn đối với các vật liệu tiêu chuẩn. Đối với các đơn hàng tùy chỉnh, số lượng tối thiểu có thể khác nhau, vui lòng liên hệ với đội ngũ bán hàng của chúng tôi để biết thêm chi tiết.' 
+      };
+      generatedData['ph'] = { 
+        seoTitle: 'Ano ang minimum order quantity? | Mga FAQ',
+        question: 'Ano ang minimum order quantity?', 
+        slug: 'minimum-order-quantity-ph',
+        alt: 'Paliwanag sa minimum order quantity',
+        answer: 'Karaniwan kaming nangangailangan ng minimum order quantity na 100 rolls para sa mga karaniwang materyales. Para sa mga custom na order, maaaring mag-iba ang minimum na dami, mangyaring makipag-ugnayan sa aming sales team para sa mga detalye.' 
+      };
+    } else if (currentQuestion.includes('free samples')) {
+      generatedData['zh'] = { 
+        seoTitle: '你们提供免费样品吗？ | 常见问题',
+        question: '你们提供免费样品吗？', 
+        slug: 'free-samples',
+        alt: '免费样品提供',
+        answer: '是的，我们为大多数产品提供免费的A4尺寸样品。运费由买家承担。如果您需要更大的样品进行测试，请与我们联系。' 
+      };
+      generatedData['vi'] = { 
+        seoTitle: 'Bạn có cung cấp mẫu miễn phí không? | Câu hỏi thường gặp',
+        question: 'Bạn có cung cấp mẫu miễn phí không?', 
+        slug: 'mau-mien-phi',
+        alt: 'Cung cấp mẫu miễn phí',
+        answer: 'Có, chúng tôi cung cấp mẫu kích thước A4 miễn phí cho hầu hết các sản phẩm. Phí vận chuyển do người mua chịu. Nếu bạn cần mẫu lớn hơn để thử nghiệm, vui lòng liên hệ với chúng tôi.' 
+      };
+      generatedData['ph'] = { 
+        seoTitle: 'Nagbibigay ba kayo ng mga libreng sample? | Mga FAQ',
+        question: 'Nagbibigay ba kayo ng mga libreng sample?', 
+        slug: 'libreng-sample',
+        alt: 'Pagbibigay ng libreng sample',
+        answer: 'Oo, nagbibigay kami ng mga libreng sample na kasing-laki ng A4 para sa karamihan ng mga produkto. Ang gastos sa pagpapadala ay sasagutin ng mamimili. Kung kailangan mo ng mas malaking sample para sa pagsubok, mangyaring makipag-ugnayan sa amin.' 
+      };
+    } else {
+      generatedData['zh'] = { 
+        seoTitle: '交货时间是多长？ | 常见问题',
+        question: '交货时间是多长？', 
+        slug: 'delivery-time',
+        alt: '交货时间说明',
+        answer: '收到定金后，标准订单通常需要15-20个工作日。大批量或定制订单可能需要更长的时间。我们将根据您的具体订单提供准确的交货时间表。' 
+      };
+      generatedData['vi'] = { 
+        seoTitle: 'Thời gian giao hàng là bao lâu? | Câu hỏi thường gặp',
+        question: 'Thời gian giao hàng là bao lâu?', 
+        slug: 'thoi-gian-giao-hang',
+        alt: 'Giải thích thời gian giao hàng',
+        answer: 'Các đơn hàng tiêu chuẩn thường mất 15-20 ngày làm việc sau khi nhận được tiền cọc. Các đơn hàng số lượng lớn hoặc tùy chỉnh có thể mất nhiều thời gian hơn. Chúng tôi sẽ cung cấp lịch trình giao hàng chính xác dựa trên đơn hàng cụ thể của bạn.' 
+      };
+      generatedData['ph'] = { 
+        seoTitle: 'Gaano katagal ang oras ng paghahatid? | Mga FAQ',
+        question: 'Gaano katagal ang oras ng paghahatid?', 
+        slug: 'oras-ng-paghahatid',
+        alt: 'Paliwanag sa oras ng paghahatid',
+        answer: 'Ang mga karaniwang order ay karaniwang tumatagal ng 15-20 araw ng trabaho pagkatapos matanggap ang deposito. Ang mga malalaking volume o custom na order ay maaaring tumagal ng mas mahabang oras. Magbibigay kami ng tumpak na iskedyul ng paghahatid batay sa iyong partikular na order.' 
+      };
+    }
+    
+    setFaqDataByLang(generatedData);
     setTimeout(() => setShowAIToast(false), 4000);
+  };
+
+  const handleSave = () => {
+    showToast('FAQ 保存成功');
+  };
+
+  const handleDelete = () => {
+    setDeleteModal(null);
+    showToast('FAQ 删除成功');
   };
 
   if (view === 'edit' || view === 'details') {
     const isReadOnly = view === 'details';
     return (
       <div className="space-y-6 animate-in fade-in duration-500 relative">
+        {toastMsg && (
+          <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center z-50 animate-in slide-in-from-top-4">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 mr-2" />
+            <span>{toastMsg}</span>
+          </div>
+        )}
         {showAIToast && (
           <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center z-50 animate-in slide-in-from-top-4">
             <CheckCircle2 className="w-5 h-5 text-emerald-400 mr-2" />
@@ -41,7 +164,7 @@ export default function FAQ() {
             </div>
           </div>
           {!isReadOnly && (
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
+            <button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
               <Save className="w-4 h-4 mr-2" />
               保存 FAQ
             </button>
@@ -88,33 +211,61 @@ export default function FAQ() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">SEO标题 (SEO Title) <span className="text-red-500">*</span></label>
-                <input type="text" disabled={isReadOnly} className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} placeholder="用于搜索引擎优化的标题..." defaultValue={selectedItem?.question || ''} />
+                <input 
+                  type="text" 
+                  disabled={isReadOnly} 
+                  value={faqDataByLang[activeLang]?.seoTitle || ''}
+                  onChange={(e) => setFaqDataByLang(prev => ({ ...prev, [activeLang]: { ...prev[activeLang], seoTitle: e.target.value } }))}
+                  className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} 
+                  placeholder="用于搜索引擎优化的标题..." 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">H1大标题 / 问题 (H1 Question) <span className="text-red-500">*</span></label>
-                <input type="text" disabled={isReadOnly} className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} placeholder="常见问题主标题..." defaultValue={selectedItem?.question || ''} />
+                <input 
+                  type="text" 
+                  disabled={isReadOnly} 
+                  value={faqDataByLang[activeLang]?.question || ''}
+                  onChange={(e) => setFaqDataByLang(prev => ({ ...prev, [activeLang]: { ...prev[activeLang], question: e.target.value } }))}
+                  className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} 
+                  placeholder="常见问题主标题..." 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">独立网址别名 (Slug) <span className="text-red-500">*</span></label>
-                <input type="text" disabled={isReadOnly} className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} placeholder="例如: minimum-order-quantity" />
+                <input 
+                  type="text" 
+                  disabled={isReadOnly} 
+                  value={faqDataByLang[activeLang]?.slug || ''}
+                  onChange={(e) => setFaqDataByLang(prev => ({ ...prev, [activeLang]: { ...prev[activeLang], slug: e.target.value } }))}
+                  className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} 
+                  placeholder="例如: minimum-order-quantity" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">独立图片Alt文案 (Image Alt) <span className="text-red-500">*</span></label>
-                <input type="text" disabled={isReadOnly} className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} placeholder="描述图片的替代文本..." />
+                <input 
+                  type="text" 
+                  disabled={isReadOnly} 
+                  value={faqDataByLang[activeLang]?.alt || ''}
+                  onChange={(e) => setFaqDataByLang(prev => ({ ...prev, [activeLang]: { ...prev[activeLang], alt: e.target.value } }))}
+                  className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} 
+                  placeholder="描述图片的替代文本..." 
+                />
               </div>
             </div>
             
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-1.5">正文详情 / 答案 (Answer Content) <span className="text-red-500">*</span></label>
               <div className={`border border-gray-200 rounded-lg overflow-hidden transition-all ${isReadOnly ? 'opacity-70' : 'focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-500'}`}>
-                <div className="bg-gray-50 border-b border-gray-200 px-3 py-2 flex space-x-2">
-                  <div className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer transition-colors"></div>
-                  <div className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer transition-colors"></div>
-                  <div className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer transition-colors"></div>
-                  <div className="w-px h-6 bg-gray-300 mx-1"></div>
-                  <div className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer transition-colors"></div>
-                </div>
-                <textarea disabled={isReadOnly} rows={10} className={`w-full bg-white px-4 py-3 text-sm outline-none resize-y ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : ''}`} placeholder="在此输入独立的答案详情内容（支持富文本）..."></textarea>
+                <textarea 
+                  disabled={isReadOnly} 
+                  value={faqDataByLang[activeLang]?.answer || ''}
+                  onChange={(e) => setFaqDataByLang(prev => ({ ...prev, [activeLang]: { ...prev[activeLang], answer: e.target.value } }))}
+                  rows={10} 
+                  className={`w-full bg-white px-4 py-3 text-sm outline-none resize-y ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : ''}`} 
+                  placeholder="在此输入独立的答案详情内容（支持富文本）..."
+                ></textarea>
               </div>
             </div>
           </div>
@@ -198,7 +349,7 @@ export default function FAQ() {
               <button onClick={() => setDeleteModal(null)} className="flex-1 px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors">
                 取消
               </button>
-              <button onClick={() => setDeleteModal(null)} className="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm">
+              <button onClick={handleDelete} className="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm">
                 确认删除
               </button>
             </div>

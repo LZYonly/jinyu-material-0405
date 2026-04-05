@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, GripVertical, Eye, X } from 'lucide-react';
+import { Plus, Edit, Trash2, GripVertical, Eye, X, Sparkles } from 'lucide-react';
 
 const categories = [
   { id: 1, name: 'Advertising Media (广告耗材)', count: 45, desc: 'Self Adhesive Vinyl, Photo Paper, PET Film, etc.' },
@@ -12,19 +12,110 @@ export default function Categories() {
   const [viewModal, setViewModal] = useState<typeof categories[0] | null>(null);
   const [editModal, setEditModal] = useState<typeof categories[0] | null>(null);
   const [deleteModal, setDeleteModal] = useState<typeof categories[0] | null>(null);
+  const [activeLang, setActiveLang] = useState('en');
+  const [showAIToast, setShowAIToast] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+
+  const [categoryDataByLang, setCategoryDataByLang] = useState<Record<string, { name: string, desc: string }>>({
+    en: { name: '', desc: '' },
+    zh: { name: '', desc: '' },
+    vi: { name: '', desc: '' },
+    ph: { name: '', desc: '' },
+  });
+
+  React.useEffect(() => {
+    if (editModal || viewModal) {
+      const item = editModal || viewModal;
+      if (item) {
+        setCategoryDataByLang(prev => ({
+          ...prev,
+          en: { name: item.name, desc: item.desc }
+        }));
+      }
+    } else {
+      setCategoryDataByLang({
+        en: { name: '', desc: '' },
+        zh: { name: '', desc: '' },
+        vi: { name: '', desc: '' },
+        ph: { name: '', desc: '' },
+      });
+    }
+  }, [editModal, viewModal]);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 3000);
+  };
+
+  const handleAIGenerate = () => {
+    setShowAIToast(true);
+    
+    const currentName = categoryDataByLang['en']?.name || 'Advertising Media';
+    const currentDesc = categoryDataByLang['en']?.desc || 'Various advertising materials';
+    
+    const generatedData = { ...categoryDataByLang };
+    
+    if (currentName.includes('Media')) {
+      generatedData['zh'] = { name: '广告耗材', desc: '各类广告喷绘、写真材料' };
+      generatedData['vi'] = { name: 'Vật liệu Quảng cáo', desc: 'Các loại vật liệu in ấn quảng cáo' };
+      generatedData['ph'] = { name: 'Advertising Media', desc: 'Iba\'t ibang materyales sa pag-print ng advertising' };
+    } else if (currentName.includes('Panel')) {
+      generatedData['zh'] = { name: '广告板材', desc: 'PVC发泡板、亚克力板等' };
+      generatedData['vi'] = { name: 'Tấm Quảng cáo', desc: 'Tấm formex, tấm mica, v.v.' };
+      generatedData['ph'] = { name: 'Advertising Panel', desc: 'PVC foam board, acrylic board, atbp.' };
+    } else if (currentName.includes('Stand')) {
+      generatedData['zh'] = { name: '展示器材', desc: '易拉宝、X展架、促销台等' };
+      generatedData['vi'] = { name: 'Thiết bị Trưng bày', desc: 'Standee cuốn, standee chữ X, quầy bán hàng, v.v.' };
+      generatedData['ph'] = { name: 'Display Stand', desc: 'Roll up stand, X banner stand, promotion counter, atbp.' };
+    } else {
+      generatedData['zh'] = { name: '配件', desc: '各类广告制作相关配件' };
+      generatedData['vi'] = { name: 'Phụ kiện', desc: 'Các loại phụ kiện sản xuất quảng cáo' };
+      generatedData['ph'] = { name: 'Accessories', desc: 'Iba\'t ibang accessories para sa paggawa ng advertising' };
+    }
+    
+    setCategoryDataByLang(generatedData);
+    setTimeout(() => setShowAIToast(false), 4000);
+  };
+
+  const handleSave = () => {
+    setEditModal(null);
+    showToast('分类保存成功');
+  };
+
+  const handleDelete = () => {
+    setDeleteModal(null);
+    showToast('分类删除成功');
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {toastMsg && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center z-50 animate-in slide-in-from-top-4">
+          <Sparkles className="w-5 h-5 text-emerald-400 mr-2" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">产品分类</h1>
           <p className="text-sm text-gray-500 mt-1">管理产品目录结构，支持拖拽排序。</p>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
+        <button onClick={() => setEditModal({ id: 0, name: '', count: 0, desc: '' })} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
           <Plus className="w-4 h-4 mr-2" />
           添加分类
         </button>
       </div>
+
+      {showAIToast && (
+        <div className="fixed top-4 right-4 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-lg flex items-center animate-in slide-in-from-top-4 z-50">
+          <Sparkles className="w-5 h-5 text-purple-400 mr-3" />
+          <div>
+            <p className="font-medium text-sm">AI 正在生成多语言草稿...</p>
+            <p className="text-xs text-gray-400 mt-0.5">请稍候，生成完成后请检查并保存。</p>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">
@@ -76,14 +167,39 @@ export default function Categories() {
       {/* View Modal */}
       {viewModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center p-6 border-b border-gray-100">
               <h3 className="text-lg font-bold text-gray-900">分类详情</h3>
               <button onClick={() => setViewModal(null)} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
+            
+            <div className="flex flex-col sm:flex-row border-b border-gray-100 bg-gray-50/50 sm:items-center justify-between px-2">
+              <div className="flex overflow-x-auto hide-scrollbar">
+                {[
+                  { id: 'en', label: 'English (EN)' },
+                  { id: 'zh', label: '中文 (ZH)' },
+                  { id: 'vi', label: 'Tiếng Việt (VI)' },
+                  { id: 'ph', label: 'Filipino (PH)' }
+                ].map(l => (
+                  <button 
+                    key={l.id}
+                    onClick={() => setActiveLang(l.id)}
+                    className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${activeLang === l.id ? 'border-blue-600 text-blue-700 bg-white' : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/50'}`}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="p-6 space-y-4">
+              <div className="bg-blue-50 border border-blue-100 text-blue-800 text-sm px-4 py-2 rounded-lg flex items-start">
+                <div className="font-medium">
+                  当前正在查看 <span className="font-bold uppercase bg-blue-200 px-1.5 py-0.5 rounded text-blue-900 mx-1">{activeLang}</span> 语言版本。
+                </div>
+              </div>
               <div>
                 <p className="text-sm font-medium text-gray-500 mb-1">分类名称</p>
                 <p className="text-base font-semibold text-gray-900">{viewModal.name}</p>
@@ -109,28 +225,69 @@ export default function Categories() {
       {/* Edit Modal */}
       {editModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center p-6 border-b border-gray-100">
               <h3 className="text-lg font-bold text-gray-900">编辑分类</h3>
               <button onClick={() => setEditModal(null)} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            <div className="flex flex-col sm:flex-row border-b border-gray-100 bg-gray-50/50 sm:items-center justify-between px-2">
+              <div className="flex overflow-x-auto hide-scrollbar">
+                {[
+                  { id: 'en', label: 'English (EN)' },
+                  { id: 'zh', label: '中文 (ZH)' },
+                  { id: 'vi', label: 'Tiếng Việt (VI)' },
+                  { id: 'ph', label: 'Filipino (PH)' }
+                ].map(l => (
+                  <button 
+                    key={l.id}
+                    onClick={() => setActiveLang(l.id)}
+                    className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${activeLang === l.id ? 'border-blue-600 text-blue-700 bg-white' : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/50'}`}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+              <div className="p-2 sm:p-0">
+                <button onClick={handleAIGenerate} className="flex items-center text-xs font-medium text-purple-700 hover:text-purple-800 bg-purple-100 hover:bg-purple-200 px-3 py-1.5 rounded-lg transition-colors w-full sm:w-auto justify-center">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  AI一键生成
+                </button>
+              </div>
+            </div>
+
             <div className="p-6 space-y-4">
+              <div className="bg-blue-50 border border-blue-100 text-blue-800 text-sm px-4 py-2 rounded-lg flex items-start">
+                <div className="font-medium">
+                  当前正在编辑 <span className="font-bold uppercase bg-blue-200 px-1.5 py-0.5 rounded text-blue-900 mx-1">{activeLang}</span> 语言版本。
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">分类名称</label>
-                <input type="text" defaultValue={editModal.name} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" />
+                <input 
+                  type="text" 
+                  value={categoryDataByLang[activeLang]?.name || ''}
+                  onChange={(e) => setCategoryDataByLang(prev => ({ ...prev, [activeLang]: { ...prev[activeLang], name: e.target.value } }))}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">描述</label>
-                <textarea defaultValue={editModal.desc} rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all resize-none"></textarea>
+                <textarea 
+                  value={categoryDataByLang[activeLang]?.desc || ''}
+                  onChange={(e) => setCategoryDataByLang(prev => ({ ...prev, [activeLang]: { ...prev[activeLang], desc: e.target.value } }))}
+                  rows={3} 
+                  className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all resize-none"
+                ></textarea>
               </div>
             </div>
             <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
               <button onClick={() => setEditModal(null)} className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors">
                 取消
               </button>
-              <button onClick={() => setEditModal(null)} className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm">
+              <button onClick={handleSave} className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm">
                 保存修改
               </button>
             </div>
@@ -155,7 +312,7 @@ export default function Categories() {
               <button onClick={() => setDeleteModal(null)} className="flex-1 px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors">
                 取消
               </button>
-              <button onClick={() => setDeleteModal(null)} className="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm">
+              <button onClick={handleDelete} className="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm">
                 确认删除
               </button>
             </div>

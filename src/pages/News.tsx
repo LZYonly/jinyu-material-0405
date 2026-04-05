@@ -10,18 +10,118 @@ export default function News() {
   const [view, setView] = useState<'list' | 'edit' | 'details'>('list');
   const [activeLang, setActiveLang] = useState('en');
   const [showAIToast, setShowAIToast] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
   const [deleteModal, setDeleteModal] = useState<typeof newsList[0] | null>(null);
   const [selectedItem, setSelectedItem] = useState<typeof newsList[0] | null>(null);
+  const [newsDataByLang, setNewsDataByLang] = useState<Record<string, { seoTitle: string, title: string, slug: string, alt: string, content: string }>>({
+    en: { seoTitle: '', title: '', slug: '', alt: '', content: '' },
+    zh: { seoTitle: '', title: '', slug: '', alt: '', content: '' },
+    vi: { seoTitle: '', title: '', slug: '', alt: '', content: '' },
+    ph: { seoTitle: '', title: '', slug: '', alt: '', content: '' },
+  });
+
+  React.useEffect(() => {
+    if (selectedItem) {
+      setNewsDataByLang(prev => ({
+        ...prev,
+        zh: { 
+          seoTitle: selectedItem.title, 
+          title: selectedItem.title, 
+          slug: selectedItem.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''), 
+          alt: selectedItem.title, 
+          content: '这是新闻的详细内容...' 
+        }
+      }));
+    } else {
+      setNewsDataByLang({
+        en: { seoTitle: '', title: '', slug: '', alt: '', content: '' },
+        zh: { seoTitle: '', title: '', slug: '', alt: '', content: '' },
+        vi: { seoTitle: '', title: '', slug: '', alt: '', content: '' },
+        ph: { seoTitle: '', title: '', slug: '', alt: '', content: '' },
+      });
+    }
+  }, [selectedItem]);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 3000);
+  };
 
   const handleAIGenerate = () => {
     setShowAIToast(true);
+    
+    const currentTitle = newsDataByLang['zh']?.title || '金昱广告材料荣获ISO 9001质量管理体系认证';
+    const generatedData = { ...newsDataByLang };
+    
+    if (currentTitle.includes('ISO')) {
+      generatedData['en'] = { 
+        seoTitle: 'Jinyu Advertising Materials Awarded ISO 9001 Certification | Company News',
+        title: 'Jinyu Advertising Materials Awarded ISO 9001 Quality Management System Certification', 
+        slug: 'jinyu-awarded-iso-9001-certification',
+        alt: 'ISO 9001 Certification Certificate',
+        content: 'We are proud to announce that Jinyu Advertising Materials has successfully obtained the ISO 9001 Quality Management System certification. This achievement reflects our ongoing commitment to providing high-quality products and services to our customers worldwide.' 
+      };
+      generatedData['vi'] = { 
+        seoTitle: 'Vật liệu Quảng cáo Jinyu Đạt Chứng nhận ISO 9001 | Tin tức Công ty',
+        title: 'Vật liệu Quảng cáo Jinyu Đạt Chứng nhận Hệ thống Quản lý Chất lượng ISO 9001', 
+        slug: 'jinyu-dat-chung-nhan-iso-9001',
+        alt: 'Giấy chứng nhận ISO 9001',
+        content: 'Chúng tôi tự hào thông báo rằng Vật liệu Quảng cáo Jinyu đã nhận được chứng nhận Hệ thống Quản lý Chất lượng ISO 9001. Thành tựu này phản ánh cam kết không ngừng của chúng tôi trong việc cung cấp các sản phẩm và dịch vụ chất lượng cao cho khách hàng trên toàn thế giới.' 
+      };
+      generatedData['ph'] = { 
+        seoTitle: 'Jinyu Advertising Materials Ginawaran ng ISO 9001 Certification | Balita ng Kumpanya',
+        title: 'Jinyu Advertising Materials Ginawaran ng ISO 9001 Quality Management System Certification', 
+        slug: 'jinyu-ginawaran-ng-iso-9001-certification',
+        alt: 'Sertipiko ng ISO 9001',
+        content: 'Ipinagmamalaki naming ipahayag na ang Jinyu Advertising Materials ay matagumpay na nakakuha ng ISO 9001 Quality Management System certification. Ang tagumpay na ito ay nagpapakita ng aming patuloy na pangako sa pagbibigay ng mataas na kalidad na mga produkto at serbisyo sa aming mga customer sa buong mundo.' 
+      };
+    } else {
+      generatedData['en'] = { 
+        seoTitle: '2023 Capacity Expansion Project Completed | Jinyu News',
+        title: '2023 Capacity Expansion Project Successfully Completed with Advanced International Equipment', 
+        slug: '2023-capacity-expansion-project-completed',
+        alt: 'New Production Facility',
+        content: 'Our 2023 capacity expansion project has been successfully completed. We have introduced advanced international equipment to further enhance our production efficiency and product quality, ensuring we meet the growing demands of our global clients.' 
+      };
+      generatedData['vi'] = { 
+        seoTitle: 'Hoàn Thành Dự Án Mở Rộng Công Suất 2023 | Tin Tức Jinyu',
+        title: 'Dự Án Mở Rộng Công Suất 2023 Hoàn Thành Tốt Đẹp với Thiết Bị Quốc Tế Tiên Tiến', 
+        slug: 'hoan-thanh-du-an-mo-rong-cong-suat-2023',
+        alt: 'Cơ sở sản xuất mới',
+        content: 'Dự án mở rộng công suất năm 2023 của chúng tôi đã hoàn thành tốt đẹp. Chúng tôi đã giới thiệu các thiết bị quốc tế tiên tiến để nâng cao hơn nữa hiệu quả sản xuất và chất lượng sản phẩm, đảm bảo đáp ứng nhu cầu ngày càng tăng của khách hàng toàn cầu.' 
+      };
+      generatedData['ph'] = { 
+        seoTitle: 'Nakumpleto ang 2023 Capacity Expansion Project | Balita ng Jinyu',
+        title: '2023 Capacity Expansion Project Matagumpay na Nakumpleto gamit ang Advanced International Equipment', 
+        slug: 'nakumpleto-ang-2023-capacity-expansion-project',
+        alt: 'Bagong Pasilidad ng Produksyon',
+        content: 'Ang aming 2023 capacity expansion project ay matagumpay na nakumpleto. Nagpakilala kami ng advanced international equipment upang higit pang mapahusay ang aming kahusayan sa produksyon at kalidad ng produkto, tinitiyak na natutugunan namin ang lumalaking pangangailangan ng aming mga pandaigdigang kliyente.' 
+      };
+    }
+    
+    setNewsDataByLang(generatedData);
     setTimeout(() => setShowAIToast(false), 4000);
+  };
+
+  const handleSave = () => {
+    showToast('新闻保存成功');
+  };
+
+  const handleDelete = () => {
+    setDeleteModal(null);
+    showToast('新闻删除成功');
   };
 
   if (view === 'edit' || view === 'details') {
     const isReadOnly = view === 'details';
     return (
       <div className="space-y-6 animate-in fade-in duration-500 relative">
+        {toastMsg && (
+          <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center z-50 animate-in slide-in-from-top-4">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 mr-2" />
+            <span>{toastMsg}</span>
+          </div>
+        )}
         {showAIToast && (
           <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center z-50 animate-in slide-in-from-top-4">
             <CheckCircle2 className="w-5 h-5 text-emerald-400 mr-2" />
@@ -40,7 +140,7 @@ export default function News() {
             </div>
           </div>
           {!isReadOnly && (
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
+            <button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
               <Save className="w-4 h-4 mr-2" />
               保存新闻
             </button>
@@ -87,33 +187,61 @@ export default function News() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">SEO标题 (SEO Title) <span className="text-red-500">*</span></label>
-                <input type="text" disabled={isReadOnly} className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} placeholder="用于搜索引擎优化的标题..." defaultValue={selectedItem?.title || ''} />
+                <input 
+                  type="text" 
+                  disabled={isReadOnly} 
+                  value={newsDataByLang[activeLang]?.seoTitle || ''}
+                  onChange={(e) => setNewsDataByLang(prev => ({ ...prev, [activeLang]: { ...prev[activeLang], seoTitle: e.target.value } }))}
+                  className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} 
+                  placeholder="用于搜索引擎优化的标题..." 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">H1大标题 (H1 Title) <span className="text-red-500">*</span></label>
-                <input type="text" disabled={isReadOnly} className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} placeholder="页面主标题..." defaultValue={selectedItem?.title || ''} />
+                <input 
+                  type="text" 
+                  disabled={isReadOnly} 
+                  value={newsDataByLang[activeLang]?.title || ''}
+                  onChange={(e) => setNewsDataByLang(prev => ({ ...prev, [activeLang]: { ...prev[activeLang], title: e.target.value } }))}
+                  className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} 
+                  placeholder="页面主标题..." 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">独立网址别名 (Slug) <span className="text-red-500">*</span></label>
-                <input type="text" disabled={isReadOnly} className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} placeholder="例如: iso-9001-certification" />
+                <input 
+                  type="text" 
+                  disabled={isReadOnly} 
+                  value={newsDataByLang[activeLang]?.slug || ''}
+                  onChange={(e) => setNewsDataByLang(prev => ({ ...prev, [activeLang]: { ...prev[activeLang], slug: e.target.value } }))}
+                  className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} 
+                  placeholder="例如: iso-9001-certification" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">独立图片Alt文案 (Image Alt) <span className="text-red-500">*</span></label>
-                <input type="text" disabled={isReadOnly} className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} placeholder="描述图片的替代文本..." />
+                <input 
+                  type="text" 
+                  disabled={isReadOnly} 
+                  value={newsDataByLang[activeLang]?.alt || ''}
+                  onChange={(e) => setNewsDataByLang(prev => ({ ...prev, [activeLang]: { ...prev[activeLang], alt: e.target.value } }))}
+                  className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`} 
+                  placeholder="描述图片的替代文本..." 
+                />
               </div>
             </div>
             
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-1.5">正文详情 (Content) <span className="text-red-500">*</span></label>
               <div className={`border border-gray-200 rounded-lg overflow-hidden transition-all ${isReadOnly ? 'opacity-70' : 'focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-500'}`}>
-                <div className="bg-gray-50 border-b border-gray-200 px-3 py-2 flex space-x-2">
-                  <div className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer transition-colors"></div>
-                  <div className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer transition-colors"></div>
-                  <div className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer transition-colors"></div>
-                  <div className="w-px h-6 bg-gray-300 mx-1"></div>
-                  <div className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer transition-colors"></div>
-                </div>
-                <textarea disabled={isReadOnly} rows={10} className={`w-full bg-white px-4 py-3 text-sm outline-none resize-y ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : ''}`} placeholder="在此输入独立的正文详情内容（支持富文本）..."></textarea>
+                <textarea 
+                  disabled={isReadOnly} 
+                  value={newsDataByLang[activeLang]?.content || ''}
+                  onChange={(e) => setNewsDataByLang(prev => ({ ...prev, [activeLang]: { ...prev[activeLang], content: e.target.value } }))}
+                  rows={10} 
+                  className={`w-full bg-white px-4 py-3 text-sm outline-none resize-y ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : ''}`} 
+                  placeholder="在此输入独立的正文详情内容（支持富文本）..."
+                ></textarea>
               </div>
             </div>
           </div>
@@ -206,7 +334,7 @@ export default function News() {
               <button onClick={() => setDeleteModal(null)} className="flex-1 px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors">
                 取消
               </button>
-              <button onClick={() => setDeleteModal(null)} className="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm">
+              <button onClick={handleDelete} className="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm">
                 确认删除
               </button>
             </div>

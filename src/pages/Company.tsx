@@ -1,15 +1,32 @@
-import React from 'react';
-import { Save, Globe, Phone, Mail, MapPin, Building } from 'lucide-react';
+import React, { useState } from 'react';
+import { Save, Globe, Phone, Mail, MapPin, Building, CheckCircle2 } from 'lucide-react';
 
 export default function Company() {
+  const [toastMsg, setToastMsg] = useState('');
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 3000);
+  };
+
+  const handleSave = () => {
+    showToast('公司信息保存成功');
+  };
+
   return (
-    <div className="space-y-6 max-w-5xl animate-in fade-in duration-500">
+    <div className="space-y-6 max-w-5xl animate-in fade-in duration-500 relative">
+      {toastMsg && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center z-50 animate-in slide-in-from-top-4">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 mr-2" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">公司介绍</h1>
           <p className="text-sm text-gray-500 mt-1">更新公司基本信息、联系方式及发展历程。</p>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
+        <button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
           <Save className="w-4 h-4 mr-2" />
           保存所有修改
         </button>

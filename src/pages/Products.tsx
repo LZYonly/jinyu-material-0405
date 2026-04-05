@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Search, Filter, ArrowLeft, Sparkles, Save, CheckCircle2, List, Eye, Upload, X } from 'lucide-react';
 
-const productsList = [
+const initialProductsList = [
   { id: 1, name: 'Self Adhesive Vinyl (车贴)', category: 'Advertising Media', status: '上架', image: 'https://picsum.photos/seed/vinyl/100/100' },
   { id: 2, name: 'PVC Flex Banner (灯箱布)', category: 'Advertising Media', status: '上架', image: 'https://picsum.photos/seed/banner/100/100' },
   { id: 3, name: 'PVC Foam Board (PVC发泡板)', category: 'Advertising Panel', status: '上架', image: 'https://picsum.photos/seed/board/100/100' },
@@ -21,11 +21,12 @@ const defaultSpecs = [
 ];
 
 export default function Products() {
+  const [products, setProducts] = useState(initialProductsList);
   const [view, setView] = useState<'list' | 'edit' | 'details'>('list');
   const [activeLang, setActiveLang] = useState('en');
   const [showAIToast, setShowAIToast] = useState(false);
-  const [deleteModal, setDeleteModal] = useState<typeof productsList[0] | null>(null);
-  const [selectedItem, setSelectedItem] = useState<typeof productsList[0] | null>(null);
+  const [deleteModal, setDeleteModal] = useState<typeof initialProductsList[0] | null>(null);
+  const [selectedItem, setSelectedItem] = useState<typeof initialProductsList[0] | null>(null);
   
   // Specs are now managed per language
   const [specsByLang, setSpecsByLang] = useState<Record<string, {id: number, name: string, value: string}[]>>({
@@ -35,9 +36,107 @@ export default function Products() {
     ph: [...defaultSpecs.map(s => ({...s}))],
   });
 
+  const [namesByLang, setNamesByLang] = useState<Record<string, string>>({
+    en: "Self Adhesive Vinyl",
+    zh: "车贴",
+    vi: "Decal dán xe",
+    ph: "Self Adhesive Vinyl",
+  });
+
+  const [productImages, setProductImages] = useState<string[]>([]);
+  const [toastMsg, setToastMsg] = useState('');
+  const [deleteImageIndex, setDeleteImageIndex] = useState<number | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Prevent browser from opening dropped files
+  React.useEffect(() => {
+    const handleDragOver = (e: DragEvent) => e.preventDefault();
+    const handleDrop = (e: DragEvent) => e.preventDefault();
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('drop', handleDrop);
+    return () => {
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('drop', handleDrop);
+    };
+  }, []);
+
+  // Update productImages when selectedItem changes
+  React.useEffect(() => {
+    if (selectedItem?.image) {
+      setProductImages([selectedItem.image]);
+    } else {
+      setProductImages([]);
+    }
+  }, [selectedItem]);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 3000);
+  };
+
   const handleAIGenerate = () => {
     setShowAIToast(true);
+    
+    // Generate translations for product name
+    const currentName = namesByLang['en'] || 'Self Adhesive Vinyl';
+    setNamesByLang(prev => ({
+      ...prev,
+      zh: currentName.includes('Vinyl') ? '车贴' : currentName.includes('Banner') ? '灯箱布' : currentName.includes('Board') ? 'PVC发泡板' : currentName.includes('Roll Up') ? '易拉宝' : 'LED电源',
+      vi: currentName.includes('Vinyl') ? 'Decal dán xe' : currentName.includes('Banner') ? 'Bạt Hiflex' : currentName.includes('Board') ? 'Tấm Formex' : currentName.includes('Roll Up') ? 'Standee cuốn' : 'Nguồn LED',
+      ph: currentName.includes('Vinyl') ? 'Self Adhesive Vinyl' : currentName.includes('Banner') ? 'Tarpaulin Banner' : currentName.includes('Board') ? 'PVC Foam Board' : currentName.includes('Roll Up') ? 'Roll Up Stand' : 'LED Power Supply',
+    }));
+
+    // Generate translations for specs
+    const newSpecs = { ...specsByLang };
+    
+    // ZH
+    newSpecs['zh'] = newSpecs['en'].map(spec => ({
+      ...spec,
+      name: spec.name === 'Item Name' ? '产品名称' : spec.name === 'Release paper' ? '离型纸' : spec.name === 'Film' ? '膜厚' : spec.name === 'Surface' ? '表面' : spec.name === 'Glue' ? '胶水' : spec.name === 'Size' ? '尺寸' : spec.name === 'Ink type' ? '墨水类型' : spec.name === 'Package' ? '包装' : spec.name,
+      value: spec.value.includes('Glossy/ Matte') ? '光面/哑面' : spec.value.includes('Semi removable') ? '半可移胶, 22μm±2μm' : spec.value.includes('Eco solvent') ? '弱溶剂/溶剂' : spec.value.includes('Export carton') ? '出口纸箱' : spec.value
+    }));
+
+    // VI
+    newSpecs['vi'] = newSpecs['en'].map(spec => ({
+      ...spec,
+      name: spec.name === 'Item Name' ? 'Tên sản phẩm' : spec.name === 'Release paper' ? 'Giấy đế' : spec.name === 'Film' ? 'Độ dày màng' : spec.name === 'Surface' ? 'Bề mặt' : spec.name === 'Glue' ? 'Keo' : spec.name === 'Size' ? 'Kích thước' : spec.name === 'Ink type' ? 'Loại mực' : spec.name === 'Package' ? 'Đóng gói' : spec.name,
+      value: spec.value.includes('Glossy/ Matte') ? 'Bóng/ Mờ' : spec.value.includes('Semi removable') ? 'Keo bán tháo rời, 22μm±2μm' : spec.value.includes('Eco solvent') ? 'Mực Eco solvent/ solvent' : spec.value.includes('Export carton') ? 'Thùng carton xuất khẩu' : spec.value
+    }));
+
+    // PH
+    newSpecs['ph'] = newSpecs['en'].map(spec => ({
+      ...spec,
+      name: spec.name === 'Item Name' ? 'Pangalan ng Item' : spec.name === 'Release paper' ? 'Release paper' : spec.name === 'Film' ? 'Pelikula' : spec.name === 'Surface' ? 'Ibabaw' : spec.name === 'Glue' ? 'Pandikit' : spec.name === 'Size' ? 'Sukat' : spec.name === 'Ink type' ? 'Uri ng tinta' : spec.name === 'Package' ? 'Package' : spec.name,
+      value: spec.value.includes('Glossy/ Matte') ? 'Makintab/ Matte' : spec.value.includes('Semi removable') ? 'Semi removable, 22μm±2μm' : spec.value.includes('Eco solvent') ? 'Eco solvent/ solvent' : spec.value.includes('Export carton') ? 'Export carton' : spec.value
+    }));
+
+    setSpecsByLang(newSpecs);
+
     setTimeout(() => setShowAIToast(false), 4000);
+  };
+
+  const handleSave = () => {
+    if (selectedItem) {
+      setProducts(products.map(p => 
+        p.id === selectedItem.id 
+          ? { ...p, image: productImages[0] || p.image, name: namesByLang[activeLang] || p.name } 
+          : p
+      ));
+    }
+    showToast('产品保存成功');
+    setTimeout(() => setView('list'), 500);
+  };
+
+  const handleDelete = () => {
+    if (deleteModal) {
+      setProducts(products.filter(p => p.id !== deleteModal.id));
+    }
+    setDeleteModal(null);
+    showToast('产品删除成功');
+  };
+
+  const handleNameChange = (newValue: string) => {
+    setNamesByLang(prev => ({ ...prev, [activeLang]: newValue }));
   };
 
   const handleSpecChange = (index: number, field: 'name' | 'value', newValue: string) => {
@@ -62,6 +161,12 @@ export default function Products() {
     const isReadOnly = view === 'details';
     return (
       <div className="space-y-6 animate-in fade-in duration-500 relative">
+        {toastMsg && (
+          <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center z-50 animate-in slide-in-from-top-4">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 mr-2" />
+            <span>{toastMsg}</span>
+          </div>
+        )}
         {showAIToast && (
           <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center z-50 animate-in slide-in-from-top-4">
             <CheckCircle2 className="w-5 h-5 text-emerald-400 mr-2" />
@@ -80,7 +185,7 @@ export default function Products() {
             </div>
           </div>
           {!isReadOnly && (
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
+            <button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm">
               <Save className="w-4 h-4 mr-2" />
               保存产品
             </button>
@@ -93,33 +198,85 @@ export default function Products() {
             <List className="w-5 h-5 mr-2 text-blue-600" />
             基本信息 (Basic Info)
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">产品名称 (Product Name) <span className="text-red-500">*</span></label>
-              <input 
-                type="text" 
-                disabled={isReadOnly}
-                className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`}
-                placeholder="请输入产品名称..." 
-                defaultValue={selectedItem?.name || "Self Adhesive Vinyl (车贴)"} 
-              />
-              {!isReadOnly && <p className="text-xs text-gray-500 mt-2">此名称主要用于后台管理识别。</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">产品主图 (Product Image) <span className="text-red-500">*</span></label>
-              <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl transition-colors bg-gray-50 group ${isReadOnly ? 'opacity-70 cursor-not-allowed' : 'hover:border-blue-500 cursor-pointer hover:bg-blue-50/50'}`}>
-                <div className="space-y-2 text-center">
-                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-gray-200 group-hover:border-blue-200 group-hover:bg-blue-50 transition-colors">
-                    <Upload className="h-6 w-6 text-gray-400 group-hover:text-blue-600 transition-colors" />
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">产品图片 (Product Images) <span className="text-red-500">*</span> <span className="text-gray-500 font-normal ml-2">支持上传最多 6 张图片，第一张将作为主图展示</span></label>
+            <div className="mt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+                {/* Uploaded Images Grid */}
+                {productImages.map((img, index) => (
+                  <div key={index} className="relative aspect-square rounded-xl border border-gray-200 overflow-hidden group">
+                    <img src={img} alt={`Product ${index + 1}`} className="w-full h-full object-cover" />
+                    {index === 0 && (
+                      <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow-sm z-10">主图</div>
+                    )}
+                    {!isReadOnly && (
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                        {index !== 0 && (
+                          <button 
+                            onClick={() => {
+                              const newImgs = [...productImages];
+                              const [removed] = newImgs.splice(index, 1);
+                              newImgs.unshift(removed);
+                              setProductImages(newImgs);
+                            }}
+                            className="text-xs bg-white text-gray-900 px-2 py-1 rounded hover:bg-gray-100"
+                          >
+                            设为主图
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => setDeleteImageIndex(index)}
+                          className="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                        >
+                          删除
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex text-sm text-gray-600 justify-center mt-2">
-                    <span className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
-                      点击上传图片
-                    </span>
-                    <p className="pl-1">或拖拽图片到此处</p>
+                ))}
+
+                {/* Upload Button */}
+                {productImages.length < 6 && !isReadOnly && (
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const file = e.dataTransfer.files?.[0];
+                      if (file && file.type.startsWith('image/')) {
+                        const url = URL.createObjectURL(file);
+                        setProductImages([...productImages, url]);
+                        showToast('图片上传成功');
+                      }
+                    }}
+                    className="aspect-square flex flex-col items-center justify-center border-2 border-gray-300 border-dashed rounded-xl transition-colors bg-gray-50 hover:border-blue-500 cursor-pointer hover:bg-blue-50/50 group"
+                  >
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      ref={fileInputRef}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const url = URL.createObjectURL(file);
+                          setProductImages([...productImages, url]);
+                          showToast('图片上传成功');
+                        }
+                        e.target.value = '';
+                      }} 
+                    />
+                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200 group-hover:border-blue-200 group-hover:bg-blue-50 transition-colors mb-2">
+                      <Upload className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-500 group-hover:text-blue-600">点击上传</span>
                   </div>
-                  <p className="text-xs text-gray-500">支持 PNG, JPG, WEBP 格式，最大 5MB</p>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -157,8 +314,20 @@ export default function Products() {
           <div className="p-6 space-y-6">
             <div className="bg-blue-50 border border-blue-100 text-blue-800 text-sm px-4 py-3 rounded-lg flex items-start">
               <div className="font-medium">
-                当前正在编辑 <span className="font-bold uppercase bg-blue-200 px-1.5 py-0.5 rounded text-blue-900 mx-1">{activeLang}</span> 语言版本的产品规格参数和应用场景。
+                当前正在编辑 <span className="font-bold uppercase bg-blue-200 px-1.5 py-0.5 rounded text-blue-900 mx-1">{activeLang}</span> 语言版本的产品名称和规格参数。
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">产品名称 (Product Name) <span className="text-red-500">*</span></label>
+              <input 
+                type="text" 
+                disabled={isReadOnly}
+                value={namesByLang[activeLang]}
+                onChange={(e) => handleNameChange(e.target.value)}
+                className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none transition-all ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`}
+                placeholder="请输入产品名称..." 
+              />
             </div>
             
             <div className="space-y-4">
@@ -221,62 +390,55 @@ export default function Products() {
                 </button>
               )}
             </div>
+          </div>
+        </div>
 
-            <div className="space-y-4 pt-6 border-t border-gray-100">
-              <h3 className="text-md font-bold text-gray-900">应用场景 (Application Scenarios)</h3>
-              <p className="text-sm text-gray-500">详细描述产品在不同场景下的应用，包含针对越南、菲律宾等热带气候的特性说明及SEO长尾词。</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">户外广告 (Outdoor Advertising)</label>
-                  <textarea 
-                    rows={4}
-                    disabled={isReadOnly}
-                    className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none transition-all resize-none ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`}
-                    defaultValue={activeLang === 'en' ? "Ideal for large-scale outdoor billboards in Manila and Ho Chi Minh City. Engineered for tropical climates, offering excellent UV resistance against high temperatures and sun exposure. Ensures 3-5 years of outdoor durability, waterproof and moisture-proof during the rainy season. Perfect for advertising engineers and foreign trade OEM seeking reliable outdoor advertising materials." : ""}
-                    placeholder="描述户外广告应用场景..."
-                  />
+        {/* Delete Image Modal */}
+        {deleteImageIndex !== null && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="p-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                  <Trash2 className="w-6 h-6 text-red-600" />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">门店招牌 (Store Signage)</label>
-                  <textarea 
-                    rows={4}
-                    disabled={isReadOnly}
-                    className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none transition-all resize-none ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`}
-                    defaultValue={activeLang === 'en' ? "Suitable for local store front inkjet printing and indoor lightboxes in shopping malls. Provides vibrant color reproduction and long-lasting performance. Includes frosted glass decals for store windows, offering privacy and branding. A top choice for retail material wholesalers in Vietnam and the Philippines." : ""}
-                    placeholder="描述门店招牌应用场景..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">交通安防 (Traffic Safety)</label>
-                  <textarea 
-                    rows={4}
-                    disabled={isReadOnly}
-                    className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none transition-all resize-none ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`}
-                    defaultValue={activeLang === 'en' ? "High-visibility materials for road reflective signs in Vietnam and the Philippines. Essential for construction site safety warnings and traffic management. Weather-resistant and highly reflective, meeting local safety standards for advertising engineering projects." : ""}
-                    placeholder="描述交通安防应用场景..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">车身商业广告 (Vehicle Advertising)</label>
-                  <textarea 
-                    rows={4}
-                    disabled={isReadOnly}
-                    className={`w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none transition-all resize-none ${isReadOnly ? 'text-gray-500 cursor-not-allowed' : 'focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500'}`}
-                    defaultValue={activeLang === 'en' ? "Premium vehicle wraps for local buses and delivery trucks. Features excellent conformability for curved surfaces and strong adhesion. Withstands tropical heat and heavy rain, maintaining brand image on the move. Ideal for commercial fleet branding and foreign trade OEM." : ""}
-                    placeholder="描述车身商业广告应用场景..."
-                  />
-                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">确认删除图片？</h3>
+                <p className="text-sm text-gray-500">
+                  您确定要删除这张图片吗？此操作无法撤销。
+                </p>
+              </div>
+              <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-center gap-3">
+                <button onClick={() => setDeleteImageIndex(null)} className="flex-1 px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors">
+                  取消
+                </button>
+                <button 
+                  onClick={() => {
+                    const newImgs = [...productImages];
+                    newImgs.splice(deleteImageIndex, 1);
+                    setProductImages(newImgs);
+                    setDeleteImageIndex(null);
+                    showToast('图片已删除');
+                  }} 
+                  className="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm"
+                >
+                  确认删除
+                </button>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {toastMsg && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center z-50 animate-in slide-in-from-top-4">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 mr-2" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">产品管理</h1>
@@ -319,7 +481,7 @@ export default function Products() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {productsList.map((product) => (
+              {products.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
@@ -380,7 +542,7 @@ export default function Products() {
               <button onClick={() => setDeleteModal(null)} className="flex-1 px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors">
                 取消
               </button>
-              <button onClick={() => setDeleteModal(null)} className="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm">
+              <button onClick={handleDelete} className="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm">
                 确认删除
               </button>
             </div>
